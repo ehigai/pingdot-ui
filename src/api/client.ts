@@ -8,13 +8,28 @@ const options = {
 
 export const queryClient = new QueryClient();
 
+// In-memory access token
+let accessToken: string | null = null;
+export function setAccessToken(token: string | null) {
+  accessToken = token;
+}
+
 const API = axios.create(options);
 
 const refreshToken = async () => {
   const refreshTokenClient = axios.create(options);
   const res = await refreshTokenClient.get("/auth/refresh");
+  setAccessToken(res.data.accessToken);
   return res.data;
 };
+
+API.interceptors.request.use((config) => {
+  if (accessToken) {
+    config.headers = config.headers || {};
+    config.headers.Authorization = `Bearer ${accessToken}`;
+  }
+  return config;
+});
 
 API.interceptors.response.use(
   (res) => res.data,

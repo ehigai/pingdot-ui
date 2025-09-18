@@ -1,8 +1,10 @@
 import ConversationList from "./ConversationList";
 import ChatWindow from "./ChatWindow";
 import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
 
 const Container = () => {
+  const { user } = useAuth();
   const [openConversationId, setOpenConversationId] = useState<string | null>(
     null
   );
