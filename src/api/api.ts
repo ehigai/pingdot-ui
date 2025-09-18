@@ -1,4 +1,4 @@
-import API from "./client";
+import API, { setAccessToken } from "./client";
 
 export interface LoginPayload {
   email: string;
@@ -17,6 +17,11 @@ export const login = async (
 
 export const register = async (data: RegisterPayload) =>
   API.post("/auth/register", data);
+
+export const logout = async () =>
+  API.post("/auth/logout").then(() => {
+    setAccessToken(null);
+  });
 
 export const getUser = async () => API.get("/users/profile");
 

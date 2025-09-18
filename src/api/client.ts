@@ -1,5 +1,6 @@
 import { QueryClient } from "@tanstack/react-query";
 import axios from "axios";
+import { connectSocket } from "./socket";
 
 const options = {
   baseURL: `${import.meta.env.VITE_API_URL}`,
@@ -13,6 +14,9 @@ let accessToken: string | null = null;
 export function setAccessToken(token: string | null) {
   accessToken = token;
 }
+export function getAccessToken() {
+  return accessToken;
+}
 
 const API = axios.create(options);
 
@@ -20,6 +24,7 @@ const refreshToken = async () => {
   const refreshTokenClient = axios.create(options);
   const res = await refreshTokenClient.get("/auth/refresh");
   setAccessToken(res.data.accessToken);
+  connectSocket();
   return res.data;
 };
 

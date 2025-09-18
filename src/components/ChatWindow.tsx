@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { socket, connectSocket } from "@/api/socket";
 
 const ChatWindow = ({
   openConversationId,
@@ -7,17 +8,30 @@ const ChatWindow = ({
 }) => {
   const [messageInput, setMessageInput] = useState<string>("");
 
-  // const { data: conversation, isLoading } = useQuery({
-  //   queryKey: ["conversationMessages", openConversationId],
-  //   queryFn: () => getOpenConversations(openConversationId as string),
-  // });
-
   const [messages, setMessages] = useState([
     { id: 1, sender: "Alice", content: "Hi there!" },
     { id: 2, sender: "You", content: "Hello!" },
     { id: 3, sender: "Alice", content: "How are you?" },
     { id: 4, sender: "You", content: "I'm good, thanks!" },
   ]);
+
+  useEffect(() => {
+    if (!openConversationId) return;
+    const s = socket ?? connectSocket();
+    // join conversation room
+    s.emit("join-conversation", { conversationId: openConversationId });
+
+    const onNew = (msg: any) => {
+      if (msg.conversationId === openConversationId) {
+        setMessages((m) => [...m, msg]);
+      }
+    };
+
+    s.on("new-message", onNew);
+    return () => {
+      s.off("new-message", onNew);
+    };
+  }, [openConversationId]);
 
   return (
     <section className="flex flex-col h-full w-full">
@@ -40,11 +54,38 @@ const ChatWindow = ({
           className="flex gap-2"
           onSubmit={(e) => {
             e.preventDefault();
+            if (!openConversationId) return;
             if (messageInput.trim()) {
-              setMessages([
-                ...messages,
-                { id: Date.now(), sender: "You", content: messageInput },
-              ]);
+              // optimistic UI
+              const temp = {
+                id: Date.now(),
+                sender: "You",
+                content: messageInput,
+              };
+              setMessages((m) => [...m, temp]);
+
+              // ensure socket initialized
+              const s = socket ?? connectSocket();
+              s.emit(
+                "send-message",
+                { conversationId: openConversationId, content: messageInput },
+                (ack: any) => {
+                  if (ack?.status === "ok") {
+                    // replace temp with real message id from server
+                    setMessages((prev) =>
+                      prev.map((msg) =>
+                        msg.id === temp.id ? ack.message : msg
+                      )
+                    );
+                  } else {
+                    // show error and remove temp
+                    setMessages((prev) =>
+                      prev.filter((msg) => msg.id !== temp.id)
+                    );
+                  }
+                }
+              );
+
               setMessageInput("");
             }
           }}

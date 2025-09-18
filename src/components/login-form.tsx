@@ -7,6 +7,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { login } from "@/api/api";
 import { setAccessToken } from "@/api/client";
+import { connectSocket } from "@/api/socket";
 
 export function LoginForm({
   className,
@@ -27,8 +28,9 @@ export function LoginForm({
     },
     onSuccess: (data: { accessToken: string }) => {
       setAccessToken(data.accessToken);
-      const redirectUrl = sessionStorage.getItem("redirectUrl");
+      connectSocket();
 
+      const redirectUrl = sessionStorage.getItem("redirectUrl");
       if (redirectUrl) {
         sessionStorage.removeItem("redirectUrl");
         return navigate(redirectUrl);
