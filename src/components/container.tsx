@@ -1,22 +1,30 @@
 import ConversationList from "./ConversationList";
 import ChatWindow from "./ChatWindow";
 import { useState } from "react";
-import { useAuth } from "@/hooks/useAuth";
+//import { useAuth } from "@/hooks/useAuth";
+import { useQuery } from "@tanstack/react-query";
+import { getConversations } from "@/api/api";
 
 const Container = () => {
-  const { user } = useAuth();
+  // const { user } = useAuth();
   const [openConversationId, setOpenConversationId] = useState<string | null>(
     null
   );
-  const conversations = [
-    { id: 1, name: "Alice", lastMessage: "Hi there!" },
-    { id: 2, name: "Bob", lastMessage: "How's it going?" },
-    { id: 3, name: "Charlie", lastMessage: "See you later!" },
-  ];
 
+  const { data: conversations, isPending } = useQuery({
+    queryKey: ["get-conversations"],
+    queryFn: getConversations,
+  });
   function handleOpenConversation(conversationId: string) {
     setOpenConversationId(conversationId);
   }
+
+  if (isPending || conversations == undefined) {
+    console.log("pending...");
+    return <div>Fetching conversations...</div>;
+  }
+
+  console.log("conversations", conversations);
 
   return (
     <div className="flex h-screen w-full bg-gray-50">
