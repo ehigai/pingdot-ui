@@ -1,13 +1,36 @@
 import type { Conversation } from "@/api/api";
 import CreateConversation from "./create-conversation";
+import { useEffect, useState } from "react";
+import { connectSocket, socket } from "@/api/socket";
 
 const ConversationList = ({
-  conversations,
+  conversations: data,
   handleOpenConversation,
 }: {
   conversations: Conversation[];
   handleOpenConversation: (conversationId: string) => void;
 }) => {
+  const [conversations, setConversations] = useState<Conversation[]>();
+
+  //const { user } = useUser();
+
+  useEffect(() => {
+    if (data) {
+      setConversations(data);
+    }
+  }, [data]);
+
+  const s = socket ?? connectSocket();
+
+  const onNewConversation = (conversation: Conversation) => {
+    console.log("newConvo", conversation);
+    setConversations((prev) => [...(prev as Conversation[]), conversation]);
+  };
+
+  s.on("new-conversation", onNewConversation);
+
+  // s.off("new-newConversation", onNewConversation);
+
   // runtime guard: ensure conversations is an array to avoid .map errors
   if (!Array.isArray(conversations)) {
     return (

@@ -9,14 +9,26 @@ export interface RegisterPayload extends LoginPayload {
   full_name: string;
 }
 
+export interface User {
+  id: string;
+}
+
 export interface Conversation {
-  id: number;
+  id: string;
   name?: string;
   isGroup?: boolean;
   lastMessage: string;
 }
 
-interface ConversationList {}
+export interface Message {
+  id: string;
+  clientId?: string;
+  senderId: string;
+  conversationId: string;
+  content: string;
+  imageUrl?: string;
+  status: "SENT" | "DELIVERED" | "READ" | "PENDING";
+}
 
 export const login = async (
   data: LoginPayload
@@ -30,12 +42,11 @@ export const logout = async () =>
     setAccessToken(null);
   });
 
-export const getUser = async () => API.get("/users/profile");
+export const getUser = async (): Promise<User> => API.get("/users/profile");
 
-export const getOpenConversations = async (
+export const getOpenConversationMessages = async (
   conversationId: string
-): Promise<ConversationList> =>
-  API.get(`/message/conversations/${conversationId}`);
+): Promise<Message[]> => API.get(`/message/conversations/${conversationId}`);
 
 export const getConversations = async (): Promise<Conversation[]> =>
   API.get("/message/conversations");

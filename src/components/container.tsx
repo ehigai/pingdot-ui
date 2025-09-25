@@ -24,20 +24,29 @@ const Container = () => {
     return <div>Fetching conversations...</div>;
   }
 
+  const name = conversations.find((c) => c.id === openConversationId)
+    ?.name as string;
+
   console.log("conversations", conversations);
 
   return (
-    <div className="flex h-screen w-full bg-gray-50">
-      <div className="flex-1 max-w-xs md:max-w-sm border-r border-gray-200 min-w-0 flex">
-        <ConversationList
-          conversations={conversations}
-          handleOpenConversation={handleOpenConversation}
-        />
+    <>
+      {openConversationId}
+      <div className="flex h-screen w-full bg-gray-50">
+        <div className="flex-1 max-w-xs md:max-w-sm border-r border-gray-200 min-w-0 flex">
+          <ConversationList
+            conversations={conversations}
+            handleOpenConversation={handleOpenConversation}
+          />
+        </div>
+        <div className="flex-1 min-w-0 hidden md:flex">
+          <ChatWindow
+            openConversationId={openConversationId}
+            conversationName={name}
+          />
+        </div>
       </div>
-      <div className="flex-1 min-w-0 hidden md:flex">
-        <ChatWindow openConversationId={openConversationId} />
-      </div>
-    </div>
+    </>
   );
 };
 
