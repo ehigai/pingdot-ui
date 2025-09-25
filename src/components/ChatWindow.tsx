@@ -23,7 +23,6 @@ const ChatWindow = ({
     queryFn: () => getOpenConversationMessages(openConversationId as string),
     enabled: !!openConversationId,
     refetchOnWindowFocus: true,
-    //staleTime: 30_000, // only refetch if data is older than 30s
   });
 
   const queryClient = useQueryClient();
@@ -99,9 +98,11 @@ const ChatWindow = ({
                 message.senderId === user?.id ? "text-right" : ""
               }`}
             >
-              {/* <span className="font-semibold">:</span> */}
+              <span className="font-semibold block">{message.senderId}</span>
               {message.content}
-              <div className="text-green-700">{message.status}</div>
+              {message.senderId === user?.id && (
+                <div className="text-green-700">{message.status}</div>
+              )}
             </div>
           </>
         ))}

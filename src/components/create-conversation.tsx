@@ -20,25 +20,12 @@ const CreateConversation = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const queryClient = useQueryClient();
 
-  // const mutation = useMutation({
-  //   mutationKey: ["create-conversation"],
-  //   mutationFn: createConversation,
-  //   onSuccess: () => {
-  //     // Refresh the conversation list so the new convo shows up
-  //     queryClient.invalidateQueries({ queryKey: ["get-conversations"] });
-  //     setEmail("");
-  //     setMessage("");
-  //   },
-  //   onSettled: () => setIsSubmitting(false),
-  // });
-
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (!email) return;
     setIsSubmitting(true);
     const s = socket ?? connectSocket();
-    // create a single DM (email array with one recipient)
-    //mutation.mutate({ email: [email], message: message || undefined });
+
     s.emit(
       "create-conversation",
       {

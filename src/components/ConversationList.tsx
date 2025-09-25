@@ -1,37 +1,36 @@
 import type { Conversation } from "@/api/api";
 import CreateConversation from "./create-conversation";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { connectSocket, socket } from "@/api/socket";
 
+import { useQueryClient } from "@tanstack/react-query";
+
 const ConversationList = ({
-  conversations: data,
+  conversations,
   handleOpenConversation,
 }: {
   conversations: Conversation[];
   handleOpenConversation: (conversationId: string) => void;
 }) => {
-  const [conversations, setConversations] = useState<Conversation[]>();
-
-  //const { user } = useUser();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
-    if (data) {
-      setConversations(data);
-    }
-  }, [data]);
+    const s = socket ?? connectSocket();
 
-  const s = socket ?? connectSocket();
+    const handleNewConversation = (conversation: Conversation) => {
+      queryClient.setQueryData<Conversation[]>(["get-conversations"], (old) => {
+        if (!old) return [conversation];
+        if (old.some((c) => c.id === conversation.id)) return old;
+        return [...old, conversation];
+      });
+    };
 
-  const onNewConversation = (conversation: Conversation) => {
-    console.log("newConvo", conversation);
-    setConversations((prev) => [...(prev as Conversation[]), conversation]);
-  };
+    s.on("new-conversation", handleNewConversation);
+    return () => {
+      s.off("new-conversation", handleNewConversation);
+    };
+  }, []);
 
-  s.on("new-conversation", onNewConversation);
-
-  // s.off("new-newConversation", onNewConversation);
-
-  // runtime guard: ensure conversations is an array to avoid .map errors
   if (!Array.isArray(conversations)) {
     return (
       <section className="flex flex-col h-full bg-gray-100 border-r border-gray-200 w-full">

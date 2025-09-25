@@ -18,6 +18,7 @@ export interface Conversation {
   name?: string;
   isGroup?: boolean;
   lastMessage: string;
+  members?: any[]; // type properly later
 }
 
 export interface Message {
