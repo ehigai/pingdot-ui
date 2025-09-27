@@ -60,6 +60,7 @@ const ConversationList = ({
         ))}
       </ul>
       <CreateConversation />
+      <CreateConversation type="group" conversations={conversations} />
     </section>
   );
 };

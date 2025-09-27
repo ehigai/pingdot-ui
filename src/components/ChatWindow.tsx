@@ -7,9 +7,11 @@ import { useUser } from "@/hooks/useAuth";
 const ChatWindow = ({
   openConversationId,
   conversationName,
+  isGroup,
 }: {
   openConversationId: string | null;
   conversationName: string;
+  isGroup: boolean;
 }) => {
   // store messages per conversation
   const [messagesMap, setMessagesMap] = useState<Record<string, Message[]>>({});
@@ -57,7 +59,7 @@ const ChatWindow = ({
     const onNew = (message: Message) => {
       if (
         message.conversationId === openConversationId &&
-        user?.id !== message.senderId
+        user?.id !== message.sender.id
       ) {
         setMessagesMap((prev) => ({
           ...prev,
@@ -95,12 +97,17 @@ const ChatWindow = ({
             <div
               key={message.clientId ?? message.id}
               className={`mb-2 ${
-                message.senderId === user?.id ? "text-right" : ""
+                message.sender.id === user?.id ? "text-right" : ""
               }`}
             >
-              <span className="font-semibold block">{message.senderId}</span>
+              {isGroup && (
+                <span className="font-semibold block">
+                  {message.sender.email}
+                </span>
+              )}
+
               {message.content}
-              {message.senderId === user?.id && (
+              {message.sender.id === user?.id && (
                 <div className="text-green-700">{message.status}</div>
               )}
             </div>
@@ -122,7 +129,10 @@ const ChatWindow = ({
               id: clientId,
               clientId,
               content: messageInput,
-              senderId: user?.id as string,
+              sender: {
+                id: user?.id as string,
+                email: user?.email as string,
+              },
               conversationId: openConversationId,
               status: "PENDING" as "PENDING",
             };

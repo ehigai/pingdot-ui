@@ -7,69 +7,216 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import { Plus } from "lucide-react";
 import { Textarea } from "./ui/textarea";
-import { useState, type FormEvent } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { connectSocket, socket } from "@/api/socket";
+import {
+  MultiSelect,
+  MultiSelectContent,
+  MultiSelectGroup,
+  MultiSelectItem,
+  MultiSelectTrigger,
+  MultiSelectValue,
+} from "./ui/multi-select";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "./ui/form";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import z from "zod";
+import { useState } from "react";
+import type { Conversation } from "@/api/api";
 
-const CreateConversation = () => {
-  const [email, setEmail] = useState("");
-  const [message, setMessage] = useState("");
+const formSchema = z.object({
+  emails: z.array(z.string()).min(1, "Required"),
+  message: z.string().optional(),
+  name: z.string().optional(),
+});
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
+const CreateConversation = ({
+  type,
+  conversations,
+}: {
+  type?: "group";
+  conversations?: Conversation[];
+}) => {
+  const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
 
-  const handleSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    if (!email) return;
-    setIsSubmitting(true);
+    defaultValues: {
+      emails: [],
+    },
+  });
+
+  const {
+    formState: { isSubmitting },
+  } = form;
+
+  function onSubmit(data: z.infer<typeof formSchema>) {
     const s = socket ?? connectSocket();
-
     s.emit(
       "create-conversation",
       {
-        email: [email],
-        message: message || undefined,
+        email: data.emails,
+        message: data.message,
+        name: data.name,
       },
       (ack: any) => {
         if (ack.status == "ok") {
           queryClient.invalidateQueries({ queryKey: ["get-conversations"] });
-          setEmail("");
-          setMessage("");
           console.log("ack", ack);
+          form.reset();
+          setOpen(false);
         }
-        return setIsSubmitting(false);
       }
     );
-  };
+  }
+
+  if (type === "group") {
+    return (
+      <DropdownMenu open={open} onOpenChange={setOpen}>
+        <DropdownMenuTrigger asChild>
+          <Button>New Group</Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuLabel>Create a Group</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="w-2/3 space-y-6"
+            >
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Group Name</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="text"
+                        placeholder="What would you call your group?"
+                        value={field.value}
+                        onChange={field.onChange}
+                        required
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="emails"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Select Participants</FormLabel>
+
+                    <MultiSelect
+                      onValuesChange={field.onChange}
+                      values={field.value}
+                    >
+                      <FormControl>
+                        <MultiSelectTrigger className="w-full">
+                          <MultiSelectValue placeholder="Select frameworks..." />
+                        </MultiSelectTrigger>
+                      </FormControl>
+
+                      <MultiSelectContent>
+                        <MultiSelectGroup>
+                          {conversations?.map((conversation) => {
+                            if (!conversation.isGroup) {
+                              return (
+                                <MultiSelectItem
+                                  value={conversation.members?.[0].email}
+                                >
+                                  {conversation.name}
+                                </MultiSelectItem>
+                              );
+                            }
+                          })}
+                        </MultiSelectGroup>
+                      </MultiSelectContent>
+                    </MultiSelect>
+
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Creatimg group..." : "Create group"}
+              </Button>
+            </form>
+          </Form>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  }
+
   return (
-    <DropdownMenu>
+    <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" className="rounded-full w-10 h-10">
-          <Plus />
-        </Button>
+        <Button variant="outline">New Contact</Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56">
         <DropdownMenuLabel>Create Conversation</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <form onSubmit={handleSubmit} className="space-y-2">
-          <Input
-            type="email"
-            placeholder="Enter user email..."
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          <Textarea
-            placeholder="Optional message..."
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-          />
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Sending..." : "Send message"}
-          </Button>
-        </form>
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="w-2/3 space-y-6"
+          >
+            <FormField
+              control={form.control}
+              name="emails"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="email"
+                      placeholder="Enter user email..."
+                      value={field.value?.[0] ?? ""}
+                      onChange={(e) => field.onChange([e.target.value])}
+                      required
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="message"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Message</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Message..."
+                      value={field.value}
+                      onChange={field.onChange}
+                      required
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Sending..." : "Send message"}
+            </Button>
+          </form>
+        </Form>
       </DropdownMenuContent>
     </DropdownMenu>
   );

@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { login } from "@/api/api";
 import { setAccessToken } from "@/api/client";
 import { connectSocket } from "@/api/socket";
@@ -113,9 +113,9 @@ export function LoginForm({
       </div>
       <div className="text-center text-sm">
         Don&apos;t have an account?{" "}
-        <a href="#" className="underline underline-offset-4">
-          Sign up
-        </a>
+        <Link to="/register" className="underline underline-offset-4">
+          Register
+        </Link>
       </div>
     </form>
   );

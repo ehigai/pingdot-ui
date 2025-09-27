@@ -11,6 +11,7 @@ export interface RegisterPayload extends LoginPayload {
 
 export interface User {
   id: string;
+  email: string;
 }
 
 export interface Conversation {
@@ -24,7 +25,10 @@ export interface Conversation {
 export interface Message {
   id: string;
   clientId?: string;
-  senderId: string;
+  sender: {
+    id: string;
+    email: string;
+  };
   conversationId: string;
   content: string;
   imageUrl?: string;

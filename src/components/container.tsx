@@ -24,8 +24,9 @@ const Container = () => {
     return <div>Fetching conversations...</div>;
   }
 
-  const name = conversations.find((c) => c.id === openConversationId)
-    ?.name as string;
+  const currentConversation = conversations.find(
+    (c) => c.id === openConversationId
+  );
 
   console.log("conversations", conversations);
 
@@ -42,7 +43,8 @@ const Container = () => {
         <div className="flex-1 min-w-0 hidden md:flex">
           <ChatWindow
             openConversationId={openConversationId}
-            conversationName={name}
+            conversationName={currentConversation?.name as string}
+            isGroup={currentConversation?.isGroup as boolean}
           />
         </div>
       </div>
