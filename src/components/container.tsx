@@ -32,7 +32,6 @@ const Container = () => {
 
   return (
     <>
-      {openConversationId}
       <div className="flex h-screen w-full bg-gray-50">
         <div className="flex-1 max-w-xs md:max-w-sm border-r border-gray-200 min-w-0 flex">
           <ConversationList

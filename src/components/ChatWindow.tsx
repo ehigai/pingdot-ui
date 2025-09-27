@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { socket, connectSocket } from "@/api/socket";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getOpenConversationMessages, type Message } from "@/api/api";
 import { useUser } from "@/hooks/useAuth";
+import MessageBubble from "./MessageBubble";
 
 const ChatWindow = ({
   openConversationId,
@@ -18,6 +19,10 @@ const ChatWindow = ({
   const [messageInput, setMessageInput] = useState<string>("");
 
   const { user } = useUser();
+  const queryClient = useQueryClient();
+
+  // ref for scrolling
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   // Fetch messages for active conversation
   const { data, isPending } = useQuery({
@@ -26,8 +31,6 @@ const ChatWindow = ({
     enabled: !!openConversationId,
     refetchOnWindowFocus: true,
   });
-
-  const queryClient = useQueryClient();
 
   // invalidate the query when switching conversations
   useEffect(() => {
@@ -46,7 +49,6 @@ const ChatWindow = ({
         [openConversationId]: data,
       }));
     }
-    console.log("openconversationid", openConversationId);
   }, [data, openConversationId]);
 
   // handle socket join/leave
@@ -74,14 +76,26 @@ const ChatWindow = ({
       s.off("new-message", onNew);
       s.emit("leave-conversation", { conversationId: openConversationId });
     };
-  }, [openConversationId]);
+  }, [openConversationId, user?.id]);
 
   const messages = openConversationId
     ? messagesMap[openConversationId] || []
     : [];
 
+  // auto scroll to bottom when messages change
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, openConversationId]);
+
   if (isPending && !messages.length) {
-    return <div>Fetching Messages...</div>;
+    return (
+      <div className="flex items-center justify-center overflow-y-auto p-4 bg-white border w-full font-normal text-xl">
+        Open a conversation or create a new conversation to get started
+        messaging.
+      </div>
+    );
   }
 
   return (
@@ -91,29 +105,23 @@ const ChatWindow = ({
       </header>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 bg-white">
-        {messages.map((message) => (
-          <>
-            <div
+      {messages.length === 0 ? (
+        <div className="flex-1 flex items-center justify-center overflow-y-auto p-4 bg-white border w-full font-normal text-xl">
+          No messages to display
+        </div>
+      ) : (
+        <div className="flex-1 overflow-y-auto p-4 bg-white">
+          {messages.map((message, i) => (
+            <MessageBubble
               key={message.clientId ?? message.id}
-              className={`mb-2 ${
-                message.sender.id === user?.id ? "text-right" : ""
-              }`}
-            >
-              {isGroup && (
-                <span className="font-semibold block">
-                  {message.sender.email}
-                </span>
-              )}
-
-              {message.content}
-              {message.sender.id === user?.id && (
-                <div className="text-green-700">{message.status}</div>
-              )}
-            </div>
-          </>
-        ))}
-      </div>
+              message={message}
+              isGroup={isGroup}
+              previousMessage={i > 0 ? messages[i - 1] : null}
+            />
+          ))}
+          <div ref={messagesEndRef} />
+        </div>
+      )}
 
       {/* Input */}
       <footer className="p-4 border-t border-gray-200 bg-white">
@@ -133,13 +141,12 @@ const ChatWindow = ({
                 id: user?.id as string,
                 email: user?.email as string,
               },
+              createdAt: Date.now().toLocaleString(),
               conversationId: openConversationId,
               status: "PENDING" as "PENDING",
             };
 
-            console.log("tempId", temp.id);
-
-            //optimistic update only in the right conversation
+            // optimistic update
             setMessagesMap((prev) => ({
               ...prev,
               [openConversationId]: [...(prev[openConversationId] || []), temp],
@@ -154,7 +161,6 @@ const ChatWindow = ({
               },
               (ack: any) => {
                 if (ack?.status === "ok") {
-                  console.log("returned", ack);
                   setMessagesMap((prev) => ({
                     ...prev,
                     [openConversationId]: prev[openConversationId].map((msg) =>
@@ -162,7 +168,6 @@ const ChatWindow = ({
                     ),
                   }));
                 } else {
-                  // remove temp on failure
                   setMessagesMap((prev) => ({
                     ...prev,
                     [openConversationId]: prev[openConversationId].filter(

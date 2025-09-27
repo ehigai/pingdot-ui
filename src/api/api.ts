@@ -32,6 +32,7 @@ export interface Message {
   conversationId: string;
   content: string;
   imageUrl?: string;
+  createdAt: string;
   status: "SENT" | "DELIVERED" | "READ" | "PENDING";
 }
 
