@@ -65,10 +65,28 @@ const ChatWindow = ({
           ...prev,
           [openConversationId]: [...(prev[openConversationId] || []), message],
         }));
+
+        s.emit("message:delivered", { messageId: message.id });
       }
     };
 
     s.on("new-message", onNew);
+    s.on("message:statusUpdated", ({ messageId, status }) => {
+      setMessagesMap((prev) => ({
+        ...prev,
+        [openConversationId]: [
+          ...prev[openConversationId].map((m) => {
+            if (m.id === messageId) {
+              return {
+                ...m,
+                status,
+              };
+            }
+            return m;
+          }),
+        ],
+      }));
+    });
 
     return () => {
       s.off("new-message", onNew);
