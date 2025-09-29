@@ -20,7 +20,7 @@ export function getAccessToken() {
 
 const API = axios.create(options);
 
-const refreshToken = async () => {
+export const refreshToken = async () => {
   const refreshTokenClient = axios.create(options);
   const res = await refreshTokenClient.get("/auth/refresh");
   setAccessToken(res.data.accessToken);

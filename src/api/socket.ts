@@ -1,5 +1,5 @@
 import { io, Socket } from "socket.io-client";
-import { getAccessToken } from "./client";
+import { getAccessToken, refreshToken } from "./client";
 import { logout } from "./api";
 
 let socket: Socket | null = null;
@@ -23,23 +23,15 @@ export function createSocketInstance() {
     console.log("Socket connected:", instance.id);
   });
 
-  instance.on("disconnect", (reason) => {
+  instance.on("disconnect", async (reason) => {
     console.warn("Socket disconnected:", reason);
     if (reason === "io server disconnect") {
-      // Try reconnecting a few times then logout
-      let attempts = 0;
-      const maxAttempts = 5;
-      const interval = setInterval(() => {
-        if (attempts < maxAttempts) {
-          console.log("Attempting to reconnect socket... Attempt", attempts + 1);
-          instance.connect();
-          attempts++;
-        } else {
-          clearInterval(interval);
-          console.error("Max reconnection attempts reached. Please log in again.");
-          logout();
-        }
-      }, 2000);
+      try {
+        await refreshToken();
+        connectSocket();
+      } catch (err) {
+        logout();
+      }
     }
   });
 
