@@ -62,7 +62,7 @@ const CreateConversation = ({
   function onSubmit(data: z.infer<typeof formSchema>) {
     const s = socket ?? connectSocket();
     s.emit(
-      "create-conversation",
+      "conversation:create",
       {
         email: data.emails,
         message: data.message,

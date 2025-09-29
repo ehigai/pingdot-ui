@@ -17,10 +17,7 @@ export interface User {
 export interface Conversation {
   id: string;
   name: string | null;
-  latestMessage: {
-    content: string | null;
-    status: string | null;
-  };
+  latestMessage: Pick<Message, "content" | "status" | "createdAt" | "senderId">;
   imageUrl: string | null;
   memberCount: number;
   members: {
@@ -43,6 +40,7 @@ export interface Message {
   content: string;
   imageUrl?: string;
   createdAt: string;
+  senderId?: string;
   status: "SENT" | "DELIVERED" | "READ" | "PENDING";
 }
 
