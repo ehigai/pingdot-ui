@@ -23,6 +23,10 @@ const ConversationList = ({
         if (old.some((c) => c.id === conversation.id)) return old;
         return [...old, conversation];
       });
+
+      for (const messageId of conversation.messageIds ?? []) {
+        s.emit("message:delivered", { messageId });
+      }
     };
 
     s.on("new-conversation", handleNewConversation);
@@ -55,7 +59,7 @@ const ConversationList = ({
             className="p-4 hover:bg-gray-200 font-bold cursor-pointer border-b border-gray-100"
           >
             {conversation.name}
-            <p className="font-normal">{conversation.lastMessage}</p>
+            <p className="font-normal">{conversation.latestMessage.content}</p>
           </li>
         ))}
       </ul>
