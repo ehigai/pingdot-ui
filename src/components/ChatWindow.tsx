@@ -14,14 +14,12 @@ const ChatWindow = ({
   conversationName: string;
   isGroup: boolean;
 }) => {
-  // store messages per conversation
   const [messagesMap, setMessagesMap] = useState<Record<string, Message[]>>({});
   const [messageInput, setMessageInput] = useState<string>("");
 
   const { user } = useUser();
   const queryClient = useQueryClient();
 
-  // ref for scrolling
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   // Fetch messages for active conversation

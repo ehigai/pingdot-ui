@@ -16,10 +16,20 @@ export interface User {
 
 export interface Conversation {
   id: string;
-  name?: string;
-  isGroup?: boolean;
-  lastMessage: string;
-  members?: any[]; // type properly later
+  name: string | null;
+  latestMessage: {
+    content: string | null;
+    status: string | null;
+  };
+  imageUrl: string | null;
+  memberCount: number;
+  members: {
+    id: string;
+    email: string;
+    profile_image: string | null;
+  }[];
+  isGroup: boolean;
+  messageIds?: string[];
 }
 
 export interface Message {
@@ -46,6 +56,7 @@ export const register = async (data: RegisterPayload) =>
 export const logout = async () =>
   API.post("/auth/logout").then(() => {
     setAccessToken(null);
+    window.location.href = "/login";
   });
 
 export const getUser = async (): Promise<User> => API.get("/users/profile");
