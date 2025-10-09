@@ -65,7 +65,10 @@ const ConversationList = ({
             c.id === message.conversationId
               ? {
                   ...c,
-                  latestMessage: message,
+                  latestMessage: {
+                    ...(c.latestMessage ?? {}),
+                    ...message,
+                  },
                 }
               : c
           )
